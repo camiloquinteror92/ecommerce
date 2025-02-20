@@ -1,0 +1,368 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<style>
+/* =========================
+   ESTILOS GENERALES
+========================= */
+body {
+  background: #f9f9f9;
+  color: #333;
+}
+
+/* Sección Hero para la cabecera */
+.define-hero {
+  background: linear-gradient(135deg, #444 0%, #222 100%);
+  color: #fff;
+  padding: 40px 20px;
+  border-radius: 6px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+.define-hero h2 {
+  margin: 0 0 10px;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+.define-hero p {
+  margin: 0 auto;
+  max-width: 700px;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Contenedor principal en dos columnas */
+.define-container {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+/* Imagen e overlay de markers */
+.image-wrapper {
+  position: relative;
+  background: #fff;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+#panoramaImage {
+  width: 100%;
+  border-radius: 4px;
+  cursor: crosshair;
+  display: block;
+}
+#hotspotsContainer {
+  position: absolute;
+  top: 10px; /* mismo padding que .image-wrapper */
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
+/* Marcadores en la imagen */
+.marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  color: #fff;
+  padding: 6px 8px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+}
+.marker:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+.marker-product {
+  background: rgba(0, 128, 0, 0.8); /* verde */
+}
+.marker-scene {
+  background: rgba(255, 0, 0, 0.8); /* rojo */
+}
+
+/* Panel de configuración */
+.config-panel {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.config-panel h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* Inputs y selects */
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.config-row label {
+  min-width: 100px;
+  font-weight: 500;
+}
+.config-row input[type="text"] {
+  width: 60px;
+  text-align: center;
+  padding: 4px;
+}
+.config-row select {
+  padding: 4px;
+}
+
+/* Botón de agregar */
+#addHotspotBtn {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+#addHotspotBtn:hover {
+  background: #555;
+}
+
+/* Lista de hotspots */
+.hotspot-list-card {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+.hotspot-list-card h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+#hotspotList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#hotspotList li {
+  background: #fafafa;
+  border: 1px solid #eee;
+  margin-bottom: 6px;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Botón guardar */
+#hotspotsForm button[type="submit"] {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+#hotspotsForm button[type="submit"]:hover {
+  background: #333;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .define-container {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<!-- Sección HERO -->
+<div class="define-hero">
+  <h2>Definir Hotspots para: {{ panorama.title }}</h2>
+  <p>Selecciona posiciones en la imagen, elige si es un producto o una escena y personaliza la descripción. ¡Haz tu panorama interactivo!</p>
+</div>
+
+<!-- Contenedor principal (2 columnas) -->
+<div class="define-container">
+  <!-- Columna Izquierda: Imagen con markers -->
+  <div class="image-wrapper">
+    <img id="panoramaImage" src="{{ panorama.image.url }}" alt="{{ panorama.title }}">
+    <div id="hotspotsContainer"></div>
+  </div>
+
+  <!-- Columna Derecha: Panel de configuración -->
+  <div class="config-panel">
+    <h3>Configuración del Hotspot</h3>
+
+    <!-- Coordenadas -->
+    <div class="config-row">
+      <label for="hotspotX">Coordenada X:</label>
+      <input type="text" id="hotspotX" readonly>
+      <label for="hotspotY">Coordenada Y:</label>
+      <input type="text" id="hotspotY" readonly>
+    </div>
+
+    <!-- Tipo de Hotspot -->
+    <div class="config-row">
+      <label for="hotspotType">Tipo:</label>
+      <select id="hotspotType">
+        <option value="product">Producto</option>
+        <option value="scene">Escena</option>
+      </select>
+    </div>
+
+    <!-- Selección de Producto -->
+    <div class="config-row" id="productWrapper">
+      <label for="productSelect">Producto:</label>
+      <select id="productSelect">
+        <option value="">-- Selecciona --</option>
+        {% for p in all_products %}
+        <option value="{{ p.id }}">{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Selección de Escena -->
+    <div class="config-row" id="sceneWrapper" style="display: none;">
+      <label for="sceneSelect">Escena:</label>
+      <select id="sceneSelect">
+        <option value="">-- Selecciona --</option>
+        {% for s in all_panoramas %}
+        <option value="{{ s.id }}">{{ s.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Descripción -->
+    <div class="config-row">
+      <label for="hotspotDescription">Descripción:</label>
+      <input type="text" id="hotspotDescription" style="flex: 1;" placeholder="Texto que se mostrará en el hotspot">
+    </div>
+
+    <!-- Botón Agregar -->
+    <button id="addHotspotBtn">Agregar Hotspot</button>
+  </div>
+</div>
+
+<!-- Lista de hotspots y botón de Guardar -->
+<div class="hotspot-list-card">
+  <h3>Hotspots por Guardar</h3>
+  <ul id="hotspotList"></ul>
+
+  <form id="hotspotsForm" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="hotspots" id="hotspotsData">
+    <button type="submit">Guardar Hotspots</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const image = document.getElementById('panoramaImage');
+    const container = document.getElementById('hotspotsContainer');
+
+    const hotspotX = document.getElementById('hotspotX');
+    const hotspotY = document.getElementById('hotspotY');
+    const hotspotType = document.getElementById('hotspotType');
+    const productWrapper = document.getElementById('productWrapper');
+    const sceneWrapper = document.getElementById('sceneWrapper');
+    const productSelect = document.getElementById('productSelect');
+    const sceneSelect = document.getElementById('sceneSelect');
+    const hotspotDescription = document.getElementById('hotspotDescription');
+
+    const hotspotListUl = document.getElementById('hotspotList');
+    const addHotspotBtn = document.getElementById('addHotspotBtn');
+
+    const hotspots = []; // Array temporal para almacenar los hotspots
+
+    // Cambiar de product a scene
+    hotspotType.addEventListener('change', function() {
+      if (this.value === 'product') {
+        productWrapper.style.display = 'flex';
+        sceneWrapper.style.display = 'none';
+      } else {
+        productWrapper.style.display = 'none';
+        sceneWrapper.style.display = 'flex';
+      }
+    });
+
+    // Capturar x,y al hacer click en la imagen
+    image.addEventListener('click', function(event) {
+        const rect = image.getBoundingClientRect();
+        const xPercent = ((event.clientX - rect.left) / image.width) * 100;
+        const yPercent = ((event.clientY - rect.top) / image.height) * 100;
+        hotspotX.value = xPercent.toFixed(2);
+        hotspotY.value = yPercent.toFixed(2);
+    });
+
+    // Agregar Hotspot
+    addHotspotBtn.addEventListener('click', function() {
+      const x = parseFloat(hotspotX.value);
+      const y = parseFloat(hotspotY.value);
+      if (isNaN(x) || isNaN(y)) {
+        alert("Haz clic en la imagen para capturar la posición del hotspot.");
+        return;
+      }
+
+      const type = hotspotType.value;
+      const desc = hotspotDescription.value || "";
+      let productId = null;
+      let connectedPanoramaId = null;
+
+      if (type === 'product') {
+        productId = productSelect.value;
+      } else {
+        connectedPanoramaId = sceneSelect.value;
+      }
+
+      // Crear objeto hotspot
+      const newHotspot = {
+        type: type,
+        x: x,
+        y: y,
+        description: desc,
+        product_id: productId,
+        connected_panorama_id: connectedPanoramaId
+      };
+      hotspots.push(newHotspot);
+
+      // Crear marcador visual
+      const marker = document.createElement('div');
+      marker.classList.add('marker');
+      marker.style.top = y + '%';
+      marker.style.left = x + '%';
+      marker.innerText = (type === 'product') ? 'P' : 'S';
+      if (type === 'product') {
+        marker.classList.add('marker-product');
+      } else {
+        marker.classList.add('marker-scene');
+      }
+      container.appendChild(marker);
+
+      // Agregar a la lista
+      const li = document.createElement('li');
+      li.textContent = `Hotspot ${type.toUpperCase()} (x=${x.toFixed(2)}, y=${y.toFixed(2)}) - ${desc}`;
+      hotspotListUl.appendChild(li);
+
+      // Limpiar campos
+      hotspotX.value = '';
+      hotspotY.value = '';
+      hotspotDescription.value = '';
+    });
+
+    // Al enviar el formulario, guardamos hotspots en un input hidden
+    document.getElementById('hotspotsForm').addEventListener('submit', function() {
+      document.getElementById('hotspotsData').value = JSON.stringify(hotspots);
+    });
+});
+</script>
+{% endblock %}

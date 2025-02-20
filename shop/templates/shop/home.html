@@ -1,0 +1,193 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<style>
+/* =========================
+   Estilos Generales
+========================= */
+body {
+  background: #000; /* Fondo negro para un look espacial */
+  color: #fff;
+}
+
+/* =========================
+   Hero Sección
+========================= */
+.hero {
+  /* Un sutil degradado radial para un look espacial */
+  background: radial-gradient(circle, #111 20%, #000 100%);
+  text-align: center;
+  padding: 60px 20px;
+  margin-bottom: 50px;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.hero h2 {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #fff;
+}
+.hero p {
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  opacity: 0.85;
+}
+.hero .btn-cta {
+  display: inline-block;
+  margin-top: 30px;
+  padding: 12px 24px;
+  background: #fff;
+  color: #000;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 4px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.hero .btn-cta:hover {
+  background: #444;
+  color: #fff;
+}
+
+/* =========================
+   Grid de Panoramas
+========================= */
+.panorama-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto 50px;
+  padding: 0 20px;
+}
+
+/* =========================
+   Tarjeta de Panorama
+========================= */
+.panorama-card {
+  background: #fff; /* Contraste con el fondo negro */
+  color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(255,255,255,0.05), 0 0 10px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.panorama-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(255,255,255,0.08), 0 0 14px rgba(0,0,0,0.4);
+}
+
+/* Imagen a color */
+.panorama-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.panorama-card:hover .panorama-image {
+  transform: scale(1.05);
+}
+
+/* Contenido de la Tarjeta */
+.panorama-content {
+  padding: 15px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.panorama-title {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.panorama-description {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Botones en la tarjeta */
+.panorama-buttons {
+  display: flex;
+  gap: 10px;
+}
+.panorama-buttons a {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 4px;
+  font-weight: bold;
+  border: 1px solid #000;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* "Ver en 360" -> Fondo negro, texto blanco */
+.btn-view {
+  background: #000;
+  color: #fff;
+}
+.btn-view:hover {
+  background: #333;
+}
+
+/* "Definir Hotspots" -> Fondo blanco, texto negro */
+.btn-hotspots {
+  background: #fff;
+  color: #000;
+}
+.btn-hotspots:hover {
+  background: #000;
+  color: #fff;
+}
+
+/* =========================
+   Ajustes Responsivos
+========================= */
+@media (max-width: 576px) {
+  .hero h2 {
+    font-size: 2rem;
+  }
+  .hero p {
+    font-size: 1rem;
+  }
+  .panorama-image {
+    height: 150px;
+  }
+}
+</style>
+
+<!-- Sección HERO con estilo futurista minimalista -->
+<div class="hero">
+  <h2>Tour Virtual E-commerce 360</h2>
+  <p>Explora cada escena con la precisión de un astronauta. Descubre productos, define hotspots y vive una experiencia inmersiva.</p>
+  <a href="#panoramaGrid" class="btn-cta">Comenzar</a>
+</div>
+
+<!-- Grid de panoramas -->
+<div id="panoramaGrid" class="panorama-grid">
+  {% for pano in panoramas %}
+  <div class="panorama-card">
+    <img class="panorama-image" src="{{ pano.image.url }}" alt="{{ pano.title }}">
+    <div class="panorama-content">
+      <div>
+        <h3 class="panorama-title">{{ pano.title }}</h3>
+        <p class="panorama-description">{{ pano.description|truncatewords:15 }}</p>
+      </div>
+      <div class="panorama-buttons">
+        <a class="btn-view" href="{% url 'panorama_detail' pano.id %}">Ver en 360</a>
+        <a class="btn-hotspots" href="{% url 'define_hotspots' pano.id %}">Definir Hotspots</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <p style="text-align:center; width:100%;">No hay panoramas disponibles.</p>
+  {% endfor %}
+</div>
+{% endblock %}

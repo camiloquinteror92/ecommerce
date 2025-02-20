@@ -1,0 +1,167 @@
+{% extends "shop/base.html" %}
+{% block content %}
+<style>
+/* =========================
+   ESTILOS GENERALES
+========================= */
+body {
+  background: #f9f9f9; /* Fondo gris claro */
+  color: #333;
+}
+
+/* =========================
+   Sección Hero
+========================= */
+.product-hero {
+  background: linear-gradient(135deg, #222 0%, #111 100%);
+  color: #fff;
+  text-align: center;
+  padding: 40px 20px;
+  margin-bottom: 30px;
+  border-radius: 6px;
+}
+.product-hero h2 {
+  font-size: 2rem;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* =========================
+   Tarjeta de Detalle
+========================= */
+.product-detail-card {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 1000px;
+  margin: 0 auto 50px; /* Centrar y dar espacio */
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.product-image {
+  flex: 1;
+  min-width: 300px;
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  max-height: 450px;
+  border-radius: 4px;
+  margin: 10px;
+}
+
+.product-info {
+  flex: 2;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.product-info h3 {
+  margin-top: 0;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.product-description {
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+  color: #555;
+  line-height: 1.4;
+}
+
+.product-price {
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+/* =========================
+   Botones "Agregar al Carrito"
+========================= */
+.add-to-cart-btn {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  text-decoration: none; /* Para enlaces <a> */
+  display: inline-block; /* Para que se comporte como botón */
+  margin-top: 5px;       /* Separación vertical mínima */
+}
+.add-to-cart-btn:hover {
+  background: #333;
+}
+
+/* Envoltorio del segundo botón con formulario de cantidad */
+.quantity-form {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.quantity-form label {
+  font-weight: 500;
+}
+.quantity-form input[type="number"] {
+  width: 60px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* =========================
+   Responsivo
+========================= */
+@media (max-width: 768px) {
+  .product-detail-card {
+    flex-direction: column;
+  }
+  .product-image {
+    min-width: auto;
+  }
+  .product-image img {
+    max-height: 300px;
+  }
+}
+</style>
+
+<!-- Sección Hero con el nombre del producto -->
+<div class="product-hero">
+  <h2>{{ product.name }}</h2>
+</div>
+
+<!-- Tarjeta de detalle del producto -->
+<div class="product-detail-card">
+  <div class="product-image">
+    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+  </div>
+  <div class="product-info">
+    <h3>{{ product.name }}</h3>
+    <p class="product-description">{{ product.description }}</p>
+    <p class="product-price">Precio: ${{ product.price }}</p>
+
+    <!-- Formulario con campo "Cantidad" para agregar varias unidades -->
+    <form class="quantity-form" action="{% url 'cart_add' product.id %}" method="post">
+      {% csrf_token %}
+      <label for="quantity">Cantidad:</label>
+      <input type="number" name="quantity" id="quantity" value="1" min="1">
+      <button type="submit" class="add-to-cart-btn">
+        Agregar al Carrito
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

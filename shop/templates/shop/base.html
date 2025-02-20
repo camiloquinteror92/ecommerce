@@ -1,0 +1,78 @@
+<!-- shop/templates/shop/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>E-commerce 360</title>
+    <style>
+        /* Estilos mínimos para no sobreescribir todo tu CSS */
+
+        /* Encabezado oscuro */
+        header {
+            background: #333; 
+            color: #fff; 
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            display: inline-block;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        /* Navegación flotante a la derecha */
+        nav {
+            display: inline-block;
+            float: right;
+        }
+        nav a {
+            color: #fff;
+            margin-left: 15px;
+            text-decoration: none;
+            padding: 5px 8px;
+        }
+        nav a:hover {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        /* Enlace del carrito */
+        .cart-link {
+            background: #444;
+            border-radius: 4px;
+        }
+        .cart-link:hover {
+            background: #555;
+        }
+
+        /* Pie de página */
+        footer {
+            background: #333; 
+            color: #fff; 
+            padding: 10px;
+            clear: both;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mi E-commerce 360</h1>
+        <nav>
+            <a href="/">Inicio</a>
+            <!-- Muestra el carrito con la cantidad de ítems -->
+            <a href="{% url 'cart_detail' %}" class="cart-link">
+                Carrito ({{ cart_item_count }})
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 E-commerce 360</p>
+    </footer>
+</body>
+</html>
