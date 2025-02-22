@@ -1,13 +1,114 @@
 from django.db import models
 
+from django.db import models
+from django.utils import timezone
+
 class Product(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='products/')
+    """
+    Modelo de producto para una tienda de muebles.
+    Incluye campos de inventario, dimensiones, material, etc.
+    """
+    # Identificación y datos básicos
+    sku = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Código único de inventario (SKU)"
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text="Nombre descriptivo del mueble"
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Descripción detallada del producto"
+    )
+    
+    # Precios y descuentos
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Precio de venta"
+    )
+    discount_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Precio con descuento (opcional)"
+    )
+
+    # Inventario y estado
+    stock = models.PositiveIntegerField(
+        default=0,
+        help_text="Cantidad disponible en inventario"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Indica si el producto está disponible para la venta"
+    )
+
+    # Información visual
+    image = models.ImageField(
+        upload_to='products/',
+        blank=True,
+        null=True,
+        help_text="Imagen principal del producto"
+    )
+
+    # Datos específicos de muebles
+    material = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Material principal (madera, metal, etc.)"
+    )
+    color = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Color o acabado principal"
+    )
+    width = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Ancho (cm)"
+    )
+    height = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Altura (cm)"
+    )
+    depth = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Profundidad (cm)"
+    )
+
+    # Metadatos de creación y actualización
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Fecha de creación del registro"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Fecha de la última actualización"
+    )
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (SKU: {self.sku})"
+
+    @property
+    def final_price(self):
+        """
+        Retorna el precio con descuento si está definido, 
+        de lo contrario el precio normal.
+        """
+        return self.discount_price if self.discount_price else self.price
+
 
 
 class Panorama(models.Model):

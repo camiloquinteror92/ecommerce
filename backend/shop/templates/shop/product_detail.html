@@ -1,11 +1,12 @@
 {% extends "shop/base.html" %}
+{% load static %}
 {% block content %}
 <style>
 /* =========================
    ESTILOS GENERALES
 ========================= */
 body {
-  background: #f9f9f9; /* Fondo gris claro */
+  background: #f9f9f9;
   color: #333;
 }
 
@@ -34,7 +35,7 @@ body {
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   max-width: 1000px;
-  margin: 0 auto 50px; /* Centrar y dar espacio */
+  margin: 0 auto 50px;
   display: flex;
   flex-direction: row;
   overflow: hidden;
@@ -65,13 +66,13 @@ body {
   justify-content: center;
 }
 
+/* Título y descripción */
 .product-info h3 {
   margin-top: 0;
   font-size: 1.4rem;
   margin-bottom: 10px;
   letter-spacing: 0.5px;
 }
-
 .product-description {
   font-size: 0.95rem;
   margin-bottom: 15px;
@@ -79,10 +80,33 @@ body {
   line-height: 1.4;
 }
 
+/* Sección de metadatos del producto (SKU, stock, etc.) */
+.product-meta {
+  font-size: 0.9rem;
+  color: #444;
+  margin-bottom: 15px;
+}
+.product-meta p {
+  margin: 3px 0;
+}
+
+/* Precios */
 .product-price {
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-size: 1.1rem;
+}
+.product-discount-price {
+  font-weight: bold;
+  color: #b00;
+  margin-bottom: 5px;
+  font-size: 1rem;
+}
+.product-final-price {
+  font-weight: bold;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #000;
 }
 
 /* =========================
@@ -97,15 +121,15 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s ease;
-  text-decoration: none; /* Para enlaces <a> */
-  display: inline-block; /* Para que se comporte como botón */
-  margin-top: 5px;       /* Separación vertical mínima */
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 5px;
 }
 .add-to-cart-btn:hover {
   background: #333;
 }
 
-/* Envoltorio del segundo botón con formulario de cantidad */
+/* Formulario de cantidad */
 .quantity-form {
   margin-top: 20px;
   display: flex;
@@ -145,23 +169,60 @@ body {
 
 <!-- Tarjeta de detalle del producto -->
 <div class="product-detail-card">
+  <!-- Imagen principal -->
   <div class="product-image">
-    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+    {% if product.image %}
+      <img src="{{ product.image.url }}" alt="{{ product.name }}">
+    {% else %}
+      <img src="{% static 'images/no_image.png' %}" alt="Sin imagen">
+    {% endif %}
   </div>
+
+  <!-- Información del producto -->
   <div class="product-info">
     <h3>{{ product.name }}</h3>
     <p class="product-description">{{ product.description }}</p>
-    <p class="product-price">Precio: ${{ product.price }}</p>
+
+    <!-- Metadatos del producto (SKU, stock, material, color, dimensiones...) -->
+    <div class="product-meta">
+      <p><strong>SKU:</strong> {{ product.sku }}</p>
+      {% if product.stock > 0 %}
+        <p><strong>Stock:</strong> {{ product.stock }} unidades</p>
+      {% else %}
+        <p style="color: red;"><strong>Sin stock disponible</strong></p>
+      {% endif %}
+      {% if product.material %}
+        <p><strong>Material:</strong> {{ product.material }}</p>
+      {% endif %}
+      {% if product.color %}
+        <p><strong>Color:</strong> {{ product.color }}</p>
+      {% endif %}
+      {% if product.width and product.height and product.depth %}
+        <p><strong>Dimensiones:</strong> {{ product.width }} x {{ product.height }} x {{ product.depth }} cm</p>
+      {% endif %}
+    </div>
+
+    <!-- Precios (si hay descuento, mostrarlo) -->
+    {% if product.discount_price %}
+      <p class="product-discount-price">Precio Original: ${{ product.price }}</p>
+      <p class="product-final-price">Oferta: ${{ product.discount_price }}</p>
+    {% else %}
+      <p class="product-price">Precio: ${{ product.price }}</p>
+    {% endif %}
 
     <!-- Formulario con campo "Cantidad" para agregar varias unidades -->
-    <form class="quantity-form" action="{% url 'cart_add' product.id %}" method="post">
-      {% csrf_token %}
-      <label for="quantity">Cantidad:</label>
-      <input type="number" name="quantity" id="quantity" value="1" min="1">
-      <button type="submit" class="add-to-cart-btn">
-        Agregar al Carrito
-      </button>
-    </form>
+    {% if product.stock > 0 and product.is_active %}
+      <form class="quantity-form" action="{% url 'cart_add' product.id %}" method="post">
+        {% csrf_token %}
+        <label for="quantity">Cantidad:</label>
+        <input type="number" name="quantity" id="quantity" value="1" min="1" max="{{ product.stock }}">
+        <button type="submit" class="add-to-cart-btn">
+          Agregar al Carrito
+        </button>
+      </form>
+    {% else %}
+      <p style="color: #b00;"><em>Este producto no está disponible actualmente.</em></p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
