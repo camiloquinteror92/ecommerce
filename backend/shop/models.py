@@ -1,14 +1,30 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.utils.text import slugify
 
-from django.db import models
-from django.utils import timezone
 
+# Usuario personalizado con roles
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = (
+        ('admin', 'Administrador'),
+        ('manager', 'Gerente'),
+        ('customer', 'Cliente'),
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
+
+    def __str__(self):
+        return self.username
+
+# Categorías para los productos
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+# Producto con información extendida y relación con categoría
 class Product(models.Model):
-    """
-    Modelo de producto para una tienda de muebles.
-    Incluye campos de inventario, dimensiones, material, etc.
-    """
-    # Identificación y datos básicos
     sku = models.CharField(
         max_length=50,
         unique=True,
@@ -16,14 +32,12 @@ class Product(models.Model):
     )
     name = models.CharField(
         max_length=255,
-        help_text="Nombre descriptivo del mueble"
+        help_text="Nombre descriptivo del producto"
     )
     description = models.TextField(
         blank=True,
         help_text="Descripción detallada del producto"
     )
-    
-    # Precios y descuentos
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -36,8 +50,6 @@ class Product(models.Model):
         null=True,
         help_text="Precio con descuento (opcional)"
     )
-
-    # Inventario y estado
     stock = models.PositiveIntegerField(
         default=0,
         help_text="Cantidad disponible en inventario"
@@ -46,20 +58,16 @@ class Product(models.Model):
         default=True,
         help_text="Indica si el producto está disponible para la venta"
     )
-
-    # Información visual
     image = models.ImageField(
         upload_to='products/',
         blank=True,
         null=True,
         help_text="Imagen principal del producto"
     )
-
-    # Datos específicos de muebles
     material = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Material principal (madera, metal, etc.)"
+        help_text="Material principal"
     )
     color = models.CharField(
         max_length=50,
@@ -87,8 +95,13 @@ class Product(models.Model):
         null=True,
         help_text="Profundidad (cm)"
     )
-
-    # Metadatos de creación y actualización
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='products'
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text="Fecha de creación del registro"
@@ -103,42 +116,55 @@ class Product(models.Model):
 
     @property
     def final_price(self):
-        """
-        Retorna el precio con descuento si está definido, 
-        de lo contrario el precio normal.
-        """
         return self.discount_price if self.discount_price else self.price
 
-
-
+# Panorama 360 con hotspots y auditoría básica
 class Panorama(models.Model):
-    """
-    Representa una imagen 360 equirectangular (JPG).
-    'slug' se usará para identificarla en Pannellum.
-    """
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True, help_text="Identificador único para la escena")
     image = models.ImageField("Imagen 360 (JPG)", upload_to='panoramas/')
     description = models.TextField("Descripción", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='panoramas'
+    )
 
     def __str__(self):
         return self.title
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super(Panorama, self).save(*args, **kwargs)
 
+# Hotspot dentro de un Panorama. Puede apuntar a un Producto o a otra escena (Panorama)
 class Hotspot(models.Model):
-    """
-    Un punto interactivo dentro de un Panorama.
-    Puede apuntar a un Product (type='product') o a otro Panorama (type='scene').
-    Se almacenan x e y en porcentaje (0-100), como en tu MVP original.
-    """
     HOTSPOT_TYPE_CHOICES = [
         ('product', 'Producto'),
         ('scene', 'Escena'),
     ]
-    panorama = models.ForeignKey(Panorama, related_name='hotspots', on_delete=models.CASCADE)
-    type = models.CharField(max_length=20, choices=HOTSPOT_TYPE_CHOICES, default='product')
-    product = models.ForeignKey(Product, blank=True, null=True, on_delete=models.SET_NULL)
-    # Si el hotspot apunta a otra escena (cambiar de panorama)
+    panorama = models.ForeignKey(
+        Panorama,
+        related_name='hotspots',
+        on_delete=models.CASCADE
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=HOTSPOT_TYPE_CHOICES,
+        default='product'
+    )
+    product = models.ForeignKey(
+        Product,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name='hotspots'
+    )
     connected_panorama = models.ForeignKey(
         Panorama,
         blank=True,
@@ -150,6 +176,56 @@ class Hotspot(models.Model):
     x = models.FloatField("Coordenada X", help_text="Valor entre 0 y 100")
     y = models.FloatField("Coordenada Y", help_text="Valor entre 0 y 100")
     description = models.CharField("Descripción del Hotspot", max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='hotspots'
+    )
 
     def __str__(self):
         return f"Hotspot {self.type} en {self.panorama.title}"
+    
+    # cart/models.py
+
+from django.db import models
+from django.conf import settings
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='carts'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Cart #{self.pk} - {self.user.username}"
+
+    @property
+    def total(self):
+        """Suma el subtotal de todos los items del carrito."""
+        return sum(item.subtotal for item in self.items.all())
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+
+    @property
+    def subtotal(self):
+        """Cantidad * precio final del producto."""
+        return self.quantity * float(self.product.final_price)
+
