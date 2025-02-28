@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'shop',
     'django_filters',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -142,5 +143,13 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Ecommerce360 API',
+    'DESCRIPTION': 'Documentación completa de la API de Ecommerce360.',
+    'VERSION': '1.0.0',
+    # Opcional: si quieres personalizar más, revisa la doc de drf-spectacular
 }
 
